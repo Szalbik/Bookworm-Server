@@ -9,9 +9,22 @@ router.post("/", (req, res) => {
     if (user && user.isValidPassword(credentials.password)) {
       res.status(200).json({ user: user.toAuthJSON() });
     } else {
-      res.status(400).json({ errors: { global: "Invalid credentials haha" } });
+      res.status(400).json({ errors: { global: "Invalid credentials" } });
     }
   });
 });
+
+router.post('/confirmation', (req, res) => {
+  const {token} = req.body;
+  User.findOneAndUpdate(
+      { confirmationToken: token },
+      { confirmationToken: "", confirmed: true },
+      { new: true }
+    )
+    .then(user => {
+      user ?
+      res.json({user: user.toAuthJSON()}) : res.status(400).json({})
+    })
+})
 
 export default router;
