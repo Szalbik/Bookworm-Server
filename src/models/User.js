@@ -5,7 +5,13 @@ import uniqueValidator from "mongoose-unique-validator";
 
 const schema = new mongoose.Schema(
   {
-    email: { type: String, required: true, lowercase: true, index: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      index: true,
+      unique: true
+    },
     passwordHash: { type: String, required: true },
     confirmed: { type: Boolean, default: false },
     confirmationToken: { type: String, default: "" }
@@ -26,8 +32,14 @@ schema.methods.setConfirmationToken = function setConfirmationToken() {
 };
 
 schema.methods.generateConfirmationUrl = function generateConfirmationUrl() {
-  return `${process.env.HOST}/confirmation/${this.confirmationToken}`
-}
+  return `${process.env.HOST}/confirmation/${this.confirmationToken}`;
+};
+
+schema.methods.generateResetPasswordUrl = function generateResetPasswordUrl() {
+  return `${
+    process.env.HOST
+  }/reset_password/${this.generateResetPasswordToken()}`;
+};
 
 schema.methods.generateJWT = function generateJWT() {
   return jwt.sign(
@@ -36,6 +48,16 @@ schema.methods.generateJWT = function generateJWT() {
       confirmed: this.confirmed
     },
     process.env.JWT_SECRET
+  );
+};
+
+schema.methods.generateResetPasswordToken = function generateResetPasswordToken() {
+  return jwt.sign(
+    {
+      _id: this._id
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
   );
 };
 
