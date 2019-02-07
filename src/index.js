@@ -11,7 +11,7 @@ import books from './routes/books'
 
 dotenv.config()
 const app = express();
-mongoose.connect(process.env.MONGODB_URL, { useNewUrlParser: true })
+mongoose.connect(process.env.MONGODB_URL, { useCreateIndex: true, useNewUrlParser: true })
 
 app.use(morgan('dev'));
 app.use(bodyParser.json())

@@ -1,16 +1,40 @@
-import express from 'express';
+import express from "express";
 import request from "request-promise";
 import { parseString } from "xml2js";
-import authenticate from '../middlewares/authenticate';
+import authenticate from "../middlewares/authenticate";
+import Book from "../models/Book";
 
 const router = express.Router();
 router.use(authenticate);
 
+router.post("/", (req, res) => {
+  const book = new Book(req.body.book);
+  book
+    .save()
+    .then(book => {
+      res.json({ book: book });
+    })
+    .catch(err => {
+      res.status(400).json({ errors: parseErrors(err.errors) });
+    });
+});
+
+router.get("/", (req, res) => {
+  const books = Book.find({}).then(books => {
+    if (books.length !== 0) {
+      res.json({ books: books })
+    } else {
+      res.status(404).json({ errors: { global: "No book found" } });
+    }
+  })
+});
+
 router.get("/search", (req, res) => {
   request
     .get(
-      `https://www.goodreads.com/search/index.xml?key=${process.env
-        .GOODREADS_KEY}&q=${req.query.q}`
+      `https://www.goodreads.com/search/index.xml?key=${
+        process.env.GOODREADS_KEY
+      }&q=${req.query.q}`
     )
     .then(result =>
       parseString(result, (err, goodreadsResult) =>
@@ -23,6 +47,24 @@ router.get("/search", (req, res) => {
               covers: [work.best_book[0].image_url[0]]
             })
           )
+        })
+      )
+    );
+});
+
+router.get("/fetchPages", (req, res) => {
+  const goodreadsId = req.query.goodreadsId;
+
+  request
+    .get(
+      `https://www.goodreads.com/book/show.xml?key=${
+        process.env.GOODREADS_KEY
+      }&id=${goodreadsId}`
+    )
+    .then(result =>
+      parseString(result, (err, goodreadsResult) =>
+        res.json({
+          pages: goodreadsResult.GoodreadsResponse.book[0].num_pages[0]
         })
       )
     );
